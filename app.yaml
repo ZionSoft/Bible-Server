@@ -4,6 +4,11 @@ runtime: go
 api_version: go1
 
 handlers:
+- url: /admin/view
+  static_dir: static/admin
+  login: admin
+  secure: always
+
 - url: /view
   static_dir: static
   secure: always
