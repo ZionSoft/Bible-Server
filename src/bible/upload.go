@@ -18,7 +18,7 @@ var uploadTranslationViewTemplate = template.Must(template.New("uploadTranslatio
 const uploadTranslationViewTemplateHTML = `
 <html>
 <head>
-  <link rel="icon" type="image/x-icon" href="https://zionsoft-bible.appspot.com/view/favicon.ico" />
+  <link rel="icon" type="image/x-icon" href="/view/favicon.ico" />
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <title>ZionSoft</title>
 </head>
