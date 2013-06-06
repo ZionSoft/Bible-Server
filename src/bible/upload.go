@@ -3,6 +3,7 @@ package bible
 import (
     "archive/zip"
     "encoding/json"
+    "fmt"
     "html/template"
     "net/http"
     "time"
@@ -33,18 +34,17 @@ const uploadTranslationViewTemplateHTML = `
 </html>
 `
 
-func uploadTranslationViewHandler(w http.ResponseWriter, r *http.Request) {
+func uploadTranslationViewHandler(w http.ResponseWriter, r *http.Request) *appError {
     c := appengine.NewContext(r)
     uploadUrl, err := blobstore.UploadURL(c, "/admin/uploadTranslation", nil)
     if err != nil {
-        w.WriteHeader(http.StatusInternalServerError)
-        return
+        return &appError{http.StatusInternalServerError, fmt.Sprintf("uploadTranslationViewHandler: Failed to create upload URL '%s'.", err.Error())}
     }
     w.Header().Set("Content-Type", "text/html")
-    err = uploadTranslationViewTemplate.Execute(w, uploadUrl)
-    if err != nil {
-        w.WriteHeader(http.StatusInternalServerError)
+    if err = uploadTranslationViewTemplate.Execute(w, uploadUrl); err != nil {
+        return &appError{http.StatusInternalServerError, fmt.Sprintf("uploadTranslationViewHandler: Failed to parse HTML template '%s'.", err.Error())}
     }
+    return nil
 }
 
 type BooksInfo struct {
@@ -53,25 +53,23 @@ type BooksInfo struct {
     Language  string `json:"language"`
 }
 
-func uploadTranslationHandler(w http.ResponseWriter, r *http.Request) {
+func uploadTranslationHandler(w http.ResponseWriter, r *http.Request) *appError {
     c := appengine.NewContext(r)
     blobs, _, err := blobstore.ParseUpload(r)
     if err != nil {
-        w.WriteHeader(http.StatusInternalServerError)
-        return
+        return &appError{http.StatusInternalServerError, fmt.Sprintf("uploadTranslationHandler: Failed to parse uploaded blob '%s'.", err.Error())}
     }
     blobInfos := blobs["file"]
     if len(blobInfos) != 1 {
         w.WriteHeader(http.StatusBadRequest)
-        return
+        return &appError{http.StatusBadRequest, string("uploadTranslationHandler: No files uploaded.")}
     }
     blobInfo := blobInfos[0]
 
     reader, err := zip.NewReader(blobstore.NewReader(c, blobInfo.BlobKey), blobInfo.Size)
     if err != nil {
         blobstore.Delete(c, blobInfo.BlobKey)
-        w.WriteHeader(http.StatusInternalServerError)
-        return
+        return &appError{http.StatusInternalServerError, fmt.Sprintf("uploadTranslationHandler: Failed to create blob reader '%s'.", err.Error())}
     }
 
     var booksInfo BooksInfo
@@ -83,23 +81,20 @@ func uploadTranslationHandler(w http.ResponseWriter, r *http.Request) {
         rc, err := f.Open()
         if err != nil {
             blobstore.Delete(c, blobInfo.BlobKey)
-            w.WriteHeader(http.StatusInternalServerError)
-            return
+            return &appError{http.StatusInternalServerError, fmt.Sprintf("uploadTranslationHandler: Failed to open books.json '%s'.", err.Error())}
         }
         defer rc.Close()
         b := make([]byte, 4096)
         n, err := rc.Read(b)
         if err != nil {
             blobstore.Delete(c, blobInfo.BlobKey)
-            w.WriteHeader(http.StatusInternalServerError)
-            return
+            return &appError{http.StatusInternalServerError, fmt.Sprintf("uploadTranslationHandler: Failed to read books.json '%s'.", err.Error())}
         }
 
-        err = json.Unmarshal(b[:n - 1], &booksInfo)
+        err = json.Unmarshal(b[:n-1], &booksInfo)
         if err != nil {
             blobstore.Delete(c, blobInfo.BlobKey)
-            w.WriteHeader(http.StatusInternalServerError)
-            return
+            return &appError{http.StatusBadRequest, fmt.Sprintf("uploadTranslationHandler: Malformed books.json '%s'.", err.Error())}
         }
     }
 
@@ -114,7 +109,8 @@ func uploadTranslationHandler(w http.ResponseWriter, r *http.Request) {
     _, err = datastore.Put(c, datastore.NewIncompleteKey(c, "TranslationInfo", nil), &translationInfo)
     if err != nil {
         blobstore.Delete(c, blobInfo.BlobKey)
-        w.WriteHeader(http.StatusInternalServerError)
-        return
+        return &appError{http.StatusInternalServerError, fmt.Sprintf("uploadTranslationHandler: Failed to save translation info to datastore '%s'.", err.Error())}
     }
+
+    return nil
 }

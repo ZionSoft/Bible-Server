@@ -5,9 +5,9 @@ import (
 )
 
 func init() {
-    http.HandleFunc("/1.0/downloadTranslation", downloadTranslationHandler)
-    http.HandleFunc("/1.0/translations", queryTranslationsHandler)
+    http.Handle("/1.0/downloadTranslation", appHandler(downloadTranslationHandler))
+    http.Handle("/1.0/translations", appHandler(queryTranslationsHandler))
 
-    http.HandleFunc("/admin/view/uploadTranslation", uploadTranslationViewHandler)
-    http.HandleFunc("/admin/uploadTranslation", uploadTranslationHandler)
+    http.Handle("/admin/view/uploadTranslation", appHandler(uploadTranslationViewHandler))
+    http.Handle("/admin/uploadTranslation", appHandler(uploadTranslationHandler))
 }

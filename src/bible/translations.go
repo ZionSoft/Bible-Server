@@ -12,32 +12,30 @@ import (
     "appengine/datastore"
 )
 
-func downloadTranslationHandler(w http.ResponseWriter, r *http.Request) {
+func downloadTranslationHandler(w http.ResponseWriter, r *http.Request) *appError {
     if r.Method != "GET" {
-        w.WriteHeader(http.StatusMethodNotAllowed)
-        return
+        return &appError{http.StatusMethodNotAllowed, fmt.Sprintf("downloadTranslationHandler: Method '%s' not allowed.", r.Method)}
     }
 
     blobKey := r.FormValue("blobKey")
     if len(blobKey) == 0 {
-        w.WriteHeader(http.StatusBadRequest)
-        return
+        return &appError{http.StatusBadRequest, string("downloadTranslationHandler: Missing parameter 'blobKey'.")}
     }
 
     blobstore.Send(w, appengine.BlobKey(blobKey))
+    return nil
 }
 
-func queryTranslationsHandler(w http.ResponseWriter, r *http.Request) {
+func queryTranslationsHandler(w http.ResponseWriter, r *http.Request) *appError {
     if r.Method != "GET" {
-        w.WriteHeader(http.StatusMethodNotAllowed)
-        return
+        return &appError{http.StatusMethodNotAllowed, fmt.Sprintf("queryTranslationHandler: Method '%s' not allowed.", r.Method)}
     }
 
     // parses query parameters
     params, err := url.ParseQuery(r.URL.RawQuery)
     if err != nil {
         w.WriteHeader(http.StatusBadRequest)
-        return
+        return &appError{http.StatusBadRequest, fmt.Sprintf("queryTranslationHandler: Malformed query string '%s'.", r.URL.RawQuery)}
     }
 
     since, err := strconv.ParseInt(params.Get("since"), 10, 32)
@@ -75,8 +73,7 @@ func queryTranslationsHandler(w http.ResponseWriter, r *http.Request) {
             break
         }
         if err != nil {
-            w.WriteHeader(http.StatusInternalServerError)
-            return
+            return &appError{http.StatusInternalServerError, fmt.Sprintf("queryTranslationHandler: Failed to read translation info from datastore '%s'.", err.Error())}
         }
         translationInfo.UniqueId = key.IntID()
         translations = append(translations, translationInfo)
@@ -87,4 +84,5 @@ func queryTranslationsHandler(w http.ResponseWriter, r *http.Request) {
 
     buf, _ := json.Marshal(translations)
     fmt.Fprint(w, string(buf))
+    return nil
 }
