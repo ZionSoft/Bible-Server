@@ -5,7 +5,7 @@ import (
 )
 
 type TranslationInfo struct {
-    UniqueId  int64             `datastore:"-"`
+    UniqueId  int64             `datastore:"-" json:"uniqueId"`
     Name      string            `datastore:",noindex" json:"name"`
     ShortName string            `datastore:",noindex" json:"shortName"`
     Language  string            `json:"language"`
