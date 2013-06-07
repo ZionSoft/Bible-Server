@@ -34,7 +34,6 @@ func queryTranslationsHandler(w http.ResponseWriter, r *http.Request) *appError 
     // parses query parameters
     params, err := url.ParseQuery(r.URL.RawQuery)
     if err != nil {
-        w.WriteHeader(http.StatusBadRequest)
         return &appError{http.StatusBadRequest, fmt.Sprintf("queryTranslationHandler: Malformed query string '%s'.", r.URL.RawQuery)}
     }
 
