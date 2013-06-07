@@ -41,6 +41,10 @@
   <table id="translations" border="1">
     <tr><th>Unique ID</th><th>Name</th><th>Short Name</th><th>Language</th><th>Size</th><th>Timestamp</th><th>Blob Key</th></tr>
   </table>
-  <a href="/admin/uploadTranslationView">Add a new translation</a>
+  <h2>Add a New Translation</h2>
+  <form action="/admin/uploadTranslation" method="post" enctype="multipart/form-data">
+    <div><input type="file" name="translation" size="40" /></div>
+    <div><input type="submit" value="Submit" /></div>
+  </form>
 </body>
 </html>

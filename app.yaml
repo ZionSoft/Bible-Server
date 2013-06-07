@@ -4,7 +4,7 @@ runtime: go
 api_version: go1
 
 handlers:
-- url: /admin/view
+- url: /view/admin
   static_dir: static/admin
   login: admin
   secure: always
