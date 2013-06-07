@@ -12,29 +12,28 @@ import (
     "appengine/datastore"
 )
 
-func downloadTranslationHandler(w http.ResponseWriter, r *http.Request) *appError {
+func downloadTranslationHandler(w http.ResponseWriter, r *http.Request) {
     if r.Method != "GET" {
-        return &appError{http.StatusMethodNotAllowed, fmt.Sprintf("downloadTranslationHandler: Method '%s' not allowed.", r.Method)}
+        panic(&appError{http.StatusMethodNotAllowed})
     }
 
     blobKey := r.FormValue("blobKey")
     if len(blobKey) == 0 {
-        return &appError{http.StatusBadRequest, string("downloadTranslationHandler: Missing parameter 'blobKey'.")}
+        panic(&appError{http.StatusBadRequest})
     }
 
     blobstore.Send(w, appengine.BlobKey(blobKey))
-    return nil
 }
 
-func queryTranslationsHandler(w http.ResponseWriter, r *http.Request) *appError {
+func queryTranslationsHandler(w http.ResponseWriter, r *http.Request) {
     if r.Method != "GET" {
-        return &appError{http.StatusMethodNotAllowed, fmt.Sprintf("queryTranslationHandler: Method '%s' not allowed.", r.Method)}
+        panic(&appError{http.StatusMethodNotAllowed})
     }
 
     // parses query parameters
     params, err := url.ParseQuery(r.URL.RawQuery)
     if err != nil {
-        return &appError{http.StatusBadRequest, fmt.Sprintf("queryTranslationHandler: Malformed query string '%s'.", r.URL.RawQuery)}
+        panic(&appError{http.StatusBadRequest})
     }
 
     since, err := strconv.ParseInt(params.Get("since"), 10, 32)
@@ -72,7 +71,7 @@ func queryTranslationsHandler(w http.ResponseWriter, r *http.Request) *appError 
             break
         }
         if err != nil {
-            return &appError{http.StatusInternalServerError, fmt.Sprintf("queryTranslationHandler: Failed to read translation info from datastore '%s'.", err.Error())}
+            panic(&appError{http.StatusInternalServerError})
         }
         translationInfo.UniqueId = key.IntID()
         translations = append(translations, translationInfo)
@@ -83,5 +82,4 @@ func queryTranslationsHandler(w http.ResponseWriter, r *http.Request) *appError 
 
     buf, _ := json.Marshal(translations)
     fmt.Fprint(w, string(buf))
-    return nil
 }

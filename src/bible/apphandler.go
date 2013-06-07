@@ -2,31 +2,36 @@ package bible
 
 import (
     "net/http"
+    "reflect"
+    "runtime/debug"
 
     "appengine"
 )
 
 type appError struct {
-    code    int
-    message string
+    code int
 }
 
-type appHandler func(http.ResponseWriter, *http.Request) *appError
+type appHandler func(http.ResponseWriter, *http.Request)
 
 func (fn appHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     defer func() {
         if e := recover(); e != nil {
-            serveError(w, r, http.StatusInternalServerError, e)
+            code := http.StatusInternalServerError
+            if reflect.TypeOf(e).String() == "*bible.appError" {
+                code = e.(*appError).code
+            }
+            serveError(w, r, code)
         }
     }()
 
-    if err := fn(w, r); err != nil {
-        serveError(w, r, err.code, err.message)
-    }
+    fn(w, r)
 }
 
-func serveError(w http.ResponseWriter, r *http.Request, code int, message interface{}) {
+func serveError(w http.ResponseWriter, r *http.Request, code int) {
     c := appengine.NewContext(r)
-    c.Errorf("Error code: %d, message: %v", code, message)
+    if code == http.StatusInternalServerError {
+        c.Errorf("Stack trace:\n%s", debug.Stack())
+    }
     w.WriteHeader(code)
 }
