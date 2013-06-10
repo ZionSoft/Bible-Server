@@ -27,17 +27,14 @@ func (fn appHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
             if reflect.TypeOf(e).String() == "*bible.appError" {
                 code = e.(*appError).code
             }
-            serveError(w, r, code)
+
+            c := appengine.NewContext(r)
+            if code == http.StatusInternalServerError {
+                c.Errorf("Stack trace:\n%s", debug.Stack())
+            }
+            w.WriteHeader(code)
         }
     }()
 
     fn(w, r)
-}
-
-func serveError(w http.ResponseWriter, r *http.Request, code int) {
-    c := appengine.NewContext(r)
-    if code == http.StatusInternalServerError {
-        c.Errorf("Stack trace:\n%s", debug.Stack())
-    }
-    w.WriteHeader(code)
 }
