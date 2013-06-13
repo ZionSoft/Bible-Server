@@ -61,7 +61,10 @@ func queryTranslationsHandler(w http.ResponseWriter, r *http.Request) {
 
     // makes the query
     c := appengine.NewContext(r)
-    q := datastore.NewQuery("TranslationInfo").Offset(int(offset)).Limit(int(limit))
+    q := datastore.NewQuery("TranslationInfo").Limit(int(limit))
+    if offset > 0 {
+        q = q.Offset(int(offset))
+    }
     if since > 0 {
         q = q.Filter("Timestamp >=", since)
     }
