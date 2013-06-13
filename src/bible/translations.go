@@ -61,7 +61,7 @@ func queryTranslationsHandler(w http.ResponseWriter, r *http.Request) {
 
     // makes the query
     c := appengine.NewContext(r)
-    q := datastore.NewQuery("TranslationInfo").Limit(int(limit))
+    q := datastore.NewQuery("TranslationInfo").Order("Language").Limit(int(limit))
     if offset > 0 {
         q = q.Offset(int(offset))
     }
