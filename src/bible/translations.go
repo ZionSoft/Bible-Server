@@ -16,6 +16,7 @@ import (
     "appengine"
     "appengine/blobstore"
     "appengine/datastore"
+    "appengine/memcache"
 )
 
 func downloadTranslationHandler(w http.ResponseWriter, r *http.Request) {
@@ -34,6 +35,29 @@ func downloadTranslationHandler(w http.ResponseWriter, r *http.Request) {
 func queryTranslationsHandler(w http.ResponseWriter, r *http.Request) {
     if r.Method != "GET" {
         panic(&appError{http.StatusMethodNotAllowed})
+    }
+
+    // fetches all the translation info
+    c := appengine.NewContext(r)
+    var translations []*TranslationInfo
+    memcache.Gob.Get(c, "TranslationInfo", &translations)
+    if len(translations) == 0 {
+        // missed in memcache, fetches from datastore
+        q := datastore.NewQuery("TranslationInfo").Order("Language")
+        keys, err := q.GetAll(c, &translations)
+        if err != nil {
+            panic(&appError{http.StatusInternalServerError})
+        }
+        for i, t := range translations {
+            t.UniqueId = keys[i].IntID()
+        }
+
+        // updates memcache
+        item := &memcache.Item {
+            Key: "TranslationInfo",
+            Object: translations,
+        }
+        memcache.Gob.Set(c, item)
     }
 
     // parses query parameters
@@ -59,36 +83,30 @@ func queryTranslationsHandler(w http.ResponseWriter, r *http.Request) {
 
     language := params.Get("language")
 
-    // makes the query
-    c := appengine.NewContext(r)
-    q := datastore.NewQuery("TranslationInfo").Order("Language").Limit(int(limit))
-    if offset > 0 {
-        q = q.Offset(int(offset))
-    }
-    if since > 0 {
-        q = q.Filter("Timestamp >=", since)
-    }
-    if len(language) > 0 {
-        q = q.Filter("Language =", language)
-    }
-    i := q.Run(c)
-    translations := make([]*TranslationInfo, 0, limit)
-    for {
-        translationInfo := new(TranslationInfo)
-        key, err := i.Next(translationInfo)
-        if err == datastore.Done {
+    // filters translation info based on the query parameters
+    filteredTranslations := make([]*TranslationInfo, 0, limit)
+    for _, t := range translations {
+        if t.Timestamp < since || (len(language) > 0 && t.Language != language) {
+            continue
+        }
+
+        if offset > 0 {
+            offset = offset - 1
+            continue
+        }
+
+        if limit > 0 {
+            limit = limit - 1
+        } else {
             break
         }
-        if err != nil {
-            panic(&appError{http.StatusInternalServerError})
-        }
-        translationInfo.UniqueId = key.IntID()
-        translations = append(translations, translationInfo)
+
+        filteredTranslations = append(filteredTranslations, t)
     }
 
     // writes the response
     w.Header().Set("Content-Type", "application/json;charset=utf-8")
 
-    buf, _ := json.Marshal(translations)
+    buf, _ := json.Marshal(filteredTranslations)
     fmt.Fprint(w, string(buf))
 }

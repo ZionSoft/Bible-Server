@@ -15,6 +15,7 @@ import (
     "appengine"
     "appengine/blobstore"
     "appengine/datastore"
+    "appengine/memcache"
 )
 
 func uploadTranslationHandler(w http.ResponseWriter, r *http.Request) {
@@ -97,4 +98,7 @@ func uploadTranslationHandler(w http.ResponseWriter, r *http.Request) {
         blobstore.Delete(c, translationInfo.BlobKey)
         panic(&appError{http.StatusInternalServerError})
     }
+
+    // flushes memcache
+    memcache.Flush(c)
 }
