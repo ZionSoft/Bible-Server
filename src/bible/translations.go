@@ -16,6 +16,7 @@ import (
     "appengine"
     "appengine/blobstore"
     "appengine/datastore"
+    "appengine/delay"
     "appengine/memcache"
 )
 
@@ -29,6 +30,13 @@ func downloadTranslationHandler(w http.ResponseWriter, r *http.Request) {
         panic(&appError{http.StatusBadRequest})
     }
 
+    // TODO checks if the blob key exists
+
+    // updates logs
+    var logTranslationDownloadFunc = delay.Func("logTranslationDownload", logTranslationDownload)
+    logTranslationDownloadFunc.Call(appengine.NewContext(r), blobKey)
+
+    // sends the blob
     blobstore.Send(w, appengine.BlobKey(blobKey))
 }
 
@@ -53,8 +61,8 @@ func queryTranslationsHandler(w http.ResponseWriter, r *http.Request) {
         }
 
         // updates memcache
-        item := &memcache.Item {
-            Key: "TranslationInfo",
+        item := &memcache.Item{
+            Key:    "TranslationInfo",
             Object: translations,
         }
         memcache.Gob.Set(c, item)
