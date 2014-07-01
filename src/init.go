@@ -9,15 +9,15 @@ package src
 import (
     "net/http"
 
-    "src/bible"
     "src/core"
+    "src/obsolete"
 )
 
 func init() {
-    http.Handle("/1.0/downloadTranslation", core.Handler(bible.DownloadTranslationHandler))
-    http.Handle("/1.0/translations", core.Handler(bible.QueryTranslationsHandler))
+    http.Handle("/1.0/downloadTranslation", core.Handler(obsolete.DownloadTranslationHandler))
+    http.Handle("/1.0/translations", core.Handler(obsolete.QueryTranslationsHandler))
 
-    http.Handle("/admin/uploadTranslation", core.Handler(bible.UploadTranslationHandler))
+    http.Handle("/admin/uploadTranslation", core.Handler(obsolete.UploadTranslationHandler))
 
     http.Handle("/", core.Handler(defaultHandler))
 }
