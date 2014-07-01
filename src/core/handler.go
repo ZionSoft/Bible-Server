@@ -4,7 +4,7 @@
  * that can be found in the LICENSE file.
  */
 
-package bible
+package core
 
 import (
     "net/http"
@@ -14,23 +14,19 @@ import (
     "appengine"
 )
 
-type appError struct {
-    code int
-}
+type Handler func(http.ResponseWriter, *http.Request)
 
-type appHandler func(http.ResponseWriter, *http.Request)
-
-func (fn appHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (fn Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     defer func() {
         if e := recover(); e != nil {
             code := http.StatusInternalServerError
-            if reflect.TypeOf(e).String() == "*bible.appError" {
-                code = e.(*appError).code
+            if reflect.TypeOf(e).String() == "*core.Error" {
+                code = e.(*Error).Code
             }
 
-            c := appengine.NewContext(r)
             if code == http.StatusInternalServerError {
-                c.Errorf("Stack trace:\n%s", debug.Stack())
+                c := appengine.NewContext(r)
+                c.Errorf("Error: %s\nStack trace:\n%s", e.(*Error).Message, debug.Stack())
             }
             w.WriteHeader(code)
         }

@@ -18,16 +18,18 @@ import (
     "appengine/datastore"
     "appengine/delay"
     "appengine/memcache"
+
+    "src/core"
 )
 
-func downloadTranslationHandler(w http.ResponseWriter, r *http.Request) {
+func DownloadTranslationHandler(w http.ResponseWriter, r *http.Request) {
     if r.Method != "GET" {
-        panic(&appError{http.StatusMethodNotAllowed})
+        panic(&core.Error{http.StatusMethodNotAllowed, ""})
     }
 
     blobKey := r.FormValue("blobKey")
     if len(blobKey) == 0 {
-        panic(&appError{http.StatusBadRequest})
+        panic(&core.Error{http.StatusBadRequest, ""})
     }
 
     // TODO checks if the blob key exists
@@ -40,9 +42,9 @@ func downloadTranslationHandler(w http.ResponseWriter, r *http.Request) {
     blobstore.Send(w, appengine.BlobKey(blobKey))
 }
 
-func queryTranslationsHandler(w http.ResponseWriter, r *http.Request) {
+func QueryTranslationsHandler(w http.ResponseWriter, r *http.Request) {
     if r.Method != "GET" {
-        panic(&appError{http.StatusMethodNotAllowed})
+        panic(&core.Error{http.StatusMethodNotAllowed, ""})
     }
 
     // fetches all the translation info
@@ -54,7 +56,7 @@ func queryTranslationsHandler(w http.ResponseWriter, r *http.Request) {
         q := datastore.NewQuery("TranslationInfo").Order("Language")
         keys, err := q.GetAll(c, &translations)
         if err != nil {
-            panic(&appError{http.StatusInternalServerError})
+            panic(&core.Error{http.StatusInternalServerError, err.Error()})
         }
         for i, t := range translations {
             t.UniqueId = keys[i].IntID()
@@ -71,7 +73,7 @@ func queryTranslationsHandler(w http.ResponseWriter, r *http.Request) {
     // parses query parameters
     params, err := url.ParseQuery(r.URL.RawQuery)
     if err != nil {
-        panic(&appError{http.StatusBadRequest})
+        panic(&core.Error{http.StatusBadRequest, ""})
     }
 
     since, err := strconv.ParseInt(params.Get("since"), 10, 32)
