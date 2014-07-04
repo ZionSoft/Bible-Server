@@ -11,14 +11,18 @@ import (
 
     "src/core"
     "src/obsolete"
+    "src/translation"
 )
 
 func init() {
+    http.Handle("/admin/translation", core.Handler(translation.UploadTranslationHandler))
+    http.Handle("/admin/translation/onUploaded", core.Handler(translation.OnTranslationUploadedHandler))
+
+    // obsoleted
     http.Handle("/1.0/downloadTranslation", core.Handler(obsolete.DownloadTranslationHandler))
     http.Handle("/1.0/translations", core.Handler(obsolete.QueryTranslationsHandler))
 
-    http.Handle("/admin/uploadTranslation", core.Handler(obsolete.UploadTranslationHandler))
-
+    // default handler
     http.Handle("/", core.Handler(defaultHandler))
 }
 
