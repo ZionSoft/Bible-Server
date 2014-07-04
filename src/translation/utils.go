@@ -18,10 +18,10 @@ import (
 
 func loadTranslations(c appengine.Context) []*TranslationInfo {
     var translations []*TranslationInfo
-    memcache.Gob.Get(c, "TranslationInfoV2", &translations)
+    memcache.Gob.Get(c, "TranslationInfo", &translations)
     if len(translations) == 0 {
         // missed memcache, loads from datastore
-        q := datastore.NewQuery("TranslationInfoV2")
+        q := datastore.NewQuery("TranslationInfo")
         keys, err := q.GetAll(c, &translations)
         if err != nil {
             panic(&core.Error{http.StatusInternalServerError, err.Error()})
@@ -32,7 +32,7 @@ func loadTranslations(c appengine.Context) []*TranslationInfo {
 
         // updates memcache
         item := &memcache.Item{
-            Key:    "TranslationInfoV2",
+            Key:    "TranslationInfo",
             Object: translations,
         }
         memcache.Gob.Set(c, item)

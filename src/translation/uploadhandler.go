@@ -118,7 +118,7 @@ func OnTranslationUploadedHandler(w http.ResponseWriter, r *http.Request) {
         }
     }
 
-    _, err = datastore.Put(c, datastore.NewIncompleteKey(c, "TranslationInfoV2", nil), &translationInfo)
+    _, err = datastore.Put(c, datastore.NewIncompleteKey(c, "TranslationInfo", nil), &translationInfo)
     if err != nil {
         blobstore.Delete(c, translationBlob.BlobKey)
         panic(&core.Error{http.StatusInternalServerError, err.Error()})
