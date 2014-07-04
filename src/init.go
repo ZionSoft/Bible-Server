@@ -16,6 +16,8 @@ import (
 
 func init() {
     http.Handle("/v2/translations", core.Handler(translation.QueryTranslationHandler))
+    http.Handle("/v2/translation", core.Handler(translation.DownloadTranslationHandler))
+
     http.Handle("/admin/translation", core.Handler(translation.UploadTranslationHandler))
     http.Handle("/admin/translation/onUploaded", core.Handler(translation.OnTranslationUploadedHandler))
 

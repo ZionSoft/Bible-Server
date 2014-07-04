@@ -12,8 +12,6 @@ import (
     "net/http"
 
     "appengine"
-    "appengine/datastore"
-    "appengine/memcache"
 
     "src/core"
 )
@@ -25,26 +23,7 @@ func QueryTranslationHandler(w http.ResponseWriter, r *http.Request) {
 
     // loads all translations into memory
     c := appengine.NewContext(r)
-    var translations []*TranslationInfo
-    memcache.Gob.Get(c, "TranslationInfoV2", &translations)
-    if len(translations) == 0 {
-        // missed memcache, loads from datastore
-        q := datastore.NewQuery("TranslationInfoV2")
-        keys, err := q.GetAll(c, &translations)
-        if err != nil {
-            panic(&core.Error{http.StatusInternalServerError, err.Error()})
-        }
-        for i, t := range translations {
-            t.UniqueId = keys[i].IntID()
-        }
-
-        // updates memcache
-        item := &memcache.Item{
-            Key:    "TranslationInfoV2",
-            Object: translations,
-        }
-        memcache.Gob.Set(c, item)
-    }
+    translations := loadTranslations(c)
 
     // TODO supports queries
 
