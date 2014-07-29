@@ -39,5 +39,5 @@ func DownloadTranslationHandler(w http.ResponseWriter, r *http.Request) {
         }
     }
 
-    panic(&core.Error{http.StatusBadRequest, ""})
+    panic(&core.Error{http.StatusNotFound, ""})
 }
