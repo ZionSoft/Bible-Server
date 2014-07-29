@@ -30,6 +30,11 @@ func QueryTranslationHandler(w http.ResponseWriter, r *http.Request) {
     // writes the response
     w.Header().Set("Content-Type", "application/json;charset=utf-8")
 
+    if translations == nil || len(translations) == 0 {
+        fmt.Fprint(w, "[]")
+        return
+    }
+
     buf, _ := json.Marshal(translations)
     fmt.Fprint(w, string(buf))
 }
