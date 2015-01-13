@@ -16,8 +16,13 @@ import (
     "src/core"
 )
 
+var translations []*TranslationInfo
+
 func loadTranslations(c appengine.Context) []*TranslationInfo {
-    var translations []*TranslationInfo
+    if len(translations) > 0 {
+        return translations
+    }
+
     memcache.Gob.Get(c, "TranslationInfo", &translations)
     if len(translations) == 0 {
         // missed memcache, loads from datastore

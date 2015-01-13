@@ -125,6 +125,7 @@ func OnTranslationUploadedHandler(w http.ResponseWriter, r *http.Request) {
     }
 
     // flushes memcache
+    translations = translations[:0]
     memcache.Flush(c)
 
     // TODO redirects
