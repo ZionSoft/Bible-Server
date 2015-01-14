@@ -15,7 +15,6 @@ import (
     "appengine"
     "appengine/blobstore"
     "appengine/datastore"
-    "appengine/memcache"
 
     "src/core"
 )
@@ -124,9 +123,8 @@ func onTranslationUploadedHandler(w http.ResponseWriter, r *http.Request) {
         panic(&core.Error{http.StatusInternalServerError, err.Error()})
     }
 
-    // flushes memcache
-    translations = translations[:0]
-    memcache.Flush(c)
+    // makes sure the cache is refreshed
+    loadTranslations(c, true)
 
     // TODO redirects
 }

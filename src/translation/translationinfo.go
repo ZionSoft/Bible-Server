@@ -8,6 +8,8 @@ package translation
 
 import (
     "appengine"
+    "appengine/datastore"
+    "appengine/memcache"
 )
 
 type translationInfo struct {
@@ -19,4 +21,46 @@ type translationInfo struct {
     Size      int64             `datastore:",noindex" json:"size"`
     Created   int64             `json:"created"`
     Modified  int64             `json:"modified"`
+}
+
+var translations []*translationInfo
+
+func loadTranslations(c appengine.Context, forceRefresh bool) ([]*translationInfo, error) {
+    if !forceRefresh {
+        if len(translations) > 0 {
+            return translations, nil
+        }
+
+        memcache.Gob.Get(c, "TranslationInfo", &translations)
+        if len(translations) > 0 {
+            return translations, nil
+        }
+    }
+
+    translations, err := loadTranslationsFromDatastore(c)
+    if err != nil {
+        return nil, err
+    }
+
+    // updates memcache
+    item := &memcache.Item{
+        Key:    "TranslationInfo",
+        Object: translations,
+    }
+    memcache.Gob.Set(c, item)
+
+    return translations, nil
+}
+
+func loadTranslationsFromDatastore(c appengine.Context) ([]*translationInfo, error) {
+    var translations []*translationInfo
+    q := datastore.NewQuery("TranslationInfo")
+    keys, err := q.GetAll(c, &translations)
+    if err != nil {
+        return nil, err
+    }
+    for i, t := range translations {
+        t.UniqueId = keys[i].IntID()
+    }
+    return translations, nil
 }
