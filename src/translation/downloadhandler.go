@@ -16,7 +16,7 @@ import (
     "src/core"
 )
 
-func DownloadTranslationHandler(w http.ResponseWriter, r *http.Request) {
+func downloadTranslationHandler(w http.ResponseWriter, r *http.Request) {
     if r.Method != "GET" {
         panic(&core.Error{http.StatusMethodNotAllowed, ""})
     }
@@ -31,7 +31,10 @@ func DownloadTranslationHandler(w http.ResponseWriter, r *http.Request) {
 
     blobKey := params.Get("blobKey")
 
-    translations := loadTranslations(appengine.NewContext(r))
+    translations, err := loadTranslations(appengine.NewContext(r), false)
+    if err != nil {
+        panic(&core.Error{http.StatusInternalServerError, err.Error()})
+    }
     for _, t := range translations {
         if (string)(t.BlobKey) == blobKey {
             blobstore.Send(w, appengine.BlobKey(blobKey))

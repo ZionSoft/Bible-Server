@@ -15,12 +15,11 @@ import (
     "appengine"
     "appengine/blobstore"
     "appengine/datastore"
-    "appengine/memcache"
 
     "src/core"
 )
 
-func UploadTranslationHandler(w http.ResponseWriter, r *http.Request) {
+func uploadTranslationHandler(w http.ResponseWriter, r *http.Request) {
     if r.Method != "GET" {
         panic(&core.Error{http.StatusMethodNotAllowed, ""})
     }
@@ -62,7 +61,7 @@ that can be found in the LICENSE file.
 </html>
 `
 
-func OnTranslationUploadedHandler(w http.ResponseWriter, r *http.Request) {
+func onTranslationUploadedHandler(w http.ResponseWriter, r *http.Request) {
     if r.Method != "POST" {
         panic(&core.Error{http.StatusMethodNotAllowed, ""})
     }
@@ -78,11 +77,11 @@ func OnTranslationUploadedHandler(w http.ResponseWriter, r *http.Request) {
     }
     translationBlob := translationBlobs[0]
 
-    var translationInfo TranslationInfo
-    translationInfo.BlobKey = translationBlob.BlobKey
-    translationInfo.Size = translationBlob.Size
-    translationInfo.Created = translationBlob.CreationTime.Unix()
-    translationInfo.Modified = translationInfo.Created
+    var t translationInfo
+    t.BlobKey = translationBlob.BlobKey
+    t.Size = translationBlob.Size
+    t.Created = translationBlob.CreationTime.Unix()
+    t.Modified = t.Created
 
     c := appengine.NewContext(r)
     blobReader := blobstore.NewReader(c, translationBlob.BlobKey)
@@ -108,7 +107,7 @@ func OnTranslationUploadedHandler(w http.ResponseWriter, r *http.Request) {
             }
             b = b[:n]
 
-            err = json.Unmarshal(b, &translationInfo)
+            err = json.Unmarshal(b, &t)
             if err != nil {
                 blobstore.Delete(c, translationBlob.BlobKey)
                 panic(&core.Error{http.StatusBadRequest, ""})
@@ -118,14 +117,14 @@ func OnTranslationUploadedHandler(w http.ResponseWriter, r *http.Request) {
         }
     }
 
-    _, err = datastore.Put(c, datastore.NewIncompleteKey(c, "TranslationInfo", nil), &translationInfo)
+    _, err = datastore.Put(c, datastore.NewIncompleteKey(c, "TranslationInfo", nil), &t)
     if err != nil {
         blobstore.Delete(c, translationBlob.BlobKey)
         panic(&core.Error{http.StatusInternalServerError, err.Error()})
     }
 
-    // flushes memcache
-    memcache.Flush(c)
+    // makes sure the cache is refreshed
+    loadTranslations(c, true)
 
     // TODO redirects
 }

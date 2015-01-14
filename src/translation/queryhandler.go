@@ -16,14 +16,17 @@ import (
     "src/core"
 )
 
-func QueryTranslationHandler(w http.ResponseWriter, r *http.Request) {
+func queryTranslationHandler(w http.ResponseWriter, r *http.Request) {
     if r.Method != "GET" {
         panic(&core.Error{http.StatusMethodNotAllowed, ""})
     }
 
     // loads all translations into memory
     c := appengine.NewContext(r)
-    translations := loadTranslations(c)
+    translations, err := loadTranslations(c, false)
+    if err != nil {
+        panic(&core.Error{http.StatusInternalServerError, err.Error()})
+    }
 
     // TODO supports queries
 
