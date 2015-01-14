@@ -65,3 +65,23 @@ func createIncompleteDeviceAccountKey(c appengine.Context) *datastore.Key {
 func createDeviceAccountKey(c appengine.Context, id int64) *datastore.Key {
     return datastore.NewKey(c, "DeviceAccount", "", id, createDeviceAccountAncestorKey(c))
 }
+
+func LoadPushNotificationIDs(c appengine.Context, utcOffset int64) ([]string, error) {
+    q := datastore.NewQuery("DeviceAccount").Ancestor(createDeviceAccountAncestorKey(c)).
+        Filter("UTCOffset =", utcOffset).Project("PushNotificationID")
+    t := q.Run(c)
+    registrationIDs := make([]string, 0)
+    var err error
+    for {
+        var da deviceAccount
+        _, err = t.Next(&da)
+        if err == datastore.Done {
+            break
+        }
+        if err != nil {
+            return nil, err
+        }
+        registrationIDs = append(registrationIDs, da.PushNotificationID)
+    }
+    return registrationIDs, nil
+}
