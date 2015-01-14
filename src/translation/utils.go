@@ -16,9 +16,9 @@ import (
     "src/core"
 )
 
-var translations []*TranslationInfo
+var translations []*translationInfo
 
-func loadTranslations(c appengine.Context) []*TranslationInfo {
+func loadTranslations(c appengine.Context) []*translationInfo {
     if len(translations) > 0 {
         return translations
     }
