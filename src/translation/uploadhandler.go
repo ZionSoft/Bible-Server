@@ -20,7 +20,7 @@ import (
     "src/core"
 )
 
-func UploadTranslationHandler(w http.ResponseWriter, r *http.Request) {
+func uploadTranslationHandler(w http.ResponseWriter, r *http.Request) {
     if r.Method != "GET" {
         panic(&core.Error{http.StatusMethodNotAllowed, ""})
     }
@@ -62,7 +62,7 @@ that can be found in the LICENSE file.
 </html>
 `
 
-func OnTranslationUploadedHandler(w http.ResponseWriter, r *http.Request) {
+func onTranslationUploadedHandler(w http.ResponseWriter, r *http.Request) {
     if r.Method != "POST" {
         panic(&core.Error{http.StatusMethodNotAllowed, ""})
     }

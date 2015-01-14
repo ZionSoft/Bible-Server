@@ -16,7 +16,7 @@ import (
     "src/core"
 )
 
-func DownloadTranslationHandler(w http.ResponseWriter, r *http.Request) {
+func downloadTranslationHandler(w http.ResponseWriter, r *http.Request) {
     if r.Method != "GET" {
         panic(&core.Error{http.StatusMethodNotAllowed, ""})
     }
