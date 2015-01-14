@@ -7,6 +7,8 @@
 package translation
 
 import (
+    "sync"
+
     "appengine"
     "appengine/datastore"
     "appengine/memcache"
@@ -23,21 +25,28 @@ type translationInfo struct {
     Modified  int64             `json:"modified"`
 }
 
-var translations []*translationInfo
+var translationCache struct {
+    mu           sync.Mutex
+    translations []*translationInfo
+}
 
 func loadTranslations(c appengine.Context, forceRefresh bool) ([]*translationInfo, error) {
+    translationCache.mu.Lock()
+    defer translationCache.mu.Unlock()
+
     if !forceRefresh {
-        if len(translations) > 0 {
-            return translations, nil
+        if len(translationCache.translations) > 0 {
+            return translationCache.translations, nil
         }
 
-        memcache.Gob.Get(c, "TranslationInfo", &translations)
-        if len(translations) > 0 {
-            return translations, nil
+        memcache.Gob.Get(c, "TranslationInfo", &translationCache.translations)
+        if len(translationCache.translations) > 0 {
+            return translationCache.translations, nil
         }
     }
 
-    translations, err := loadTranslationsFromDatastore(c)
+    var err error
+    translationCache.translations, err = loadTranslationsFromDatastore(c)
     if err != nil {
         return nil, err
     }
@@ -45,11 +54,11 @@ func loadTranslations(c appengine.Context, forceRefresh bool) ([]*translationInf
     // updates memcache
     item := &memcache.Item{
         Key:    "TranslationInfo",
-        Object: translations,
+        Object: translationCache.translations,
     }
     memcache.Gob.Set(c, item)
 
-    return translations, nil
+    return translationCache.translations, nil
 }
 
 func loadTranslationsFromDatastore(c appengine.Context) ([]*translationInfo, error) {
