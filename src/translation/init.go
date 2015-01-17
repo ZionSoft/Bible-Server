@@ -7,15 +7,15 @@
 package translation
 
 import (
-    "net/http"
+	"net/http"
 
-    "src/core"
+	"src/core"
 )
 
 func init() {
-    http.Handle("/v1/translations", core.Handler(queryTranslationHandler))
-    http.Handle("/v1/translation", core.Handler(downloadTranslationHandler))
+	http.Handle("/v1/translations", core.Handler(queryTranslationHandler))
+	http.Handle("/v1/translation", core.Handler(downloadTranslationHandler))
 
-    http.Handle("/admin/translation", core.Handler(uploadTranslationHandler))
-    http.Handle("/admin/translation/onUploaded", core.Handler(onTranslationUploadedHandler))
+	http.Handle("/admin/translation", core.Handler(uploadTranslationHandler))
+	http.Handle("/admin/translation/onUploaded", core.Handler(onTranslationUploadedHandler))
 }

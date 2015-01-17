@@ -7,13 +7,13 @@
 package core
 
 import (
-    "net/http"
+	"net/http"
 )
 
 func init() {
-    http.Handle("/", Handler(defaultHandler))
+	http.Handle("/", Handler(defaultHandler))
 }
 
 func defaultHandler(w http.ResponseWriter, r *http.Request) {
-    http.Redirect(w, r, "http://www.zionsoft.net", http.StatusNotFound)
+	http.Redirect(w, r, "http://www.zionsoft.net", http.StatusNotFound)
 }

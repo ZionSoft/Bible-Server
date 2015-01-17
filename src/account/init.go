@@ -7,13 +7,13 @@
 package account
 
 import (
-    "net/http"
+	"net/http"
 
-    "src/core"
+	"src/core"
 )
 
 func init() {
-    initializeDeviceAccountCache()
+	initializeDeviceAccountCache()
 
-    http.Handle("/v1/account/device", core.Handler(registerDeviceAccountHandler))
+	http.Handle("/v1/account/device", core.Handler(registerDeviceAccountHandler))
 }

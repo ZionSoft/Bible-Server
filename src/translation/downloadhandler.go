@@ -7,40 +7,40 @@
 package translation
 
 import (
-    "net/http"
-    "net/url"
+	"net/http"
+	"net/url"
 
-    "appengine"
-    "appengine/blobstore"
+	"appengine"
+	"appengine/blobstore"
 
-    "src/core"
+	"src/core"
 )
 
 func downloadTranslationHandler(w http.ResponseWriter, r *http.Request) {
-    if r.Method != "GET" {
-        panic(&core.Error{http.StatusMethodNotAllowed, ""})
-    }
+	if r.Method != "GET" {
+		panic(&core.Error{http.StatusMethodNotAllowed, ""})
+	}
 
-    // parses query parameters
-    params, err := url.ParseQuery(r.URL.RawQuery)
-    if err != nil {
-        panic(&core.Error{http.StatusBadRequest, ""})
-    }
+	// parses query parameters
+	params, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		panic(&core.Error{http.StatusBadRequest, ""})
+	}
 
-    // TODO supports other query params
+	// TODO supports other query params
 
-    blobKey := params.Get("blobKey")
+	blobKey := params.Get("blobKey")
 
-    translations, err := loadTranslations(appengine.NewContext(r), false)
-    if err != nil {
-        panic(&core.Error{http.StatusInternalServerError, err.Error()})
-    }
-    for _, t := range translations {
-        if (string)(t.BlobKey) == blobKey {
-            blobstore.Send(w, appengine.BlobKey(blobKey))
-            return
-        }
-    }
+	translations, err := loadTranslations(appengine.NewContext(r), false)
+	if err != nil {
+		panic(&core.Error{http.StatusInternalServerError, err.Error()})
+	}
+	for _, t := range translations {
+		if (string)(t.BlobKey) == blobKey {
+			blobstore.Send(w, appengine.BlobKey(blobKey))
+			return
+		}
+	}
 
-    panic(&core.Error{http.StatusNotFound, ""})
+	panic(&core.Error{http.StatusNotFound, ""})
 }

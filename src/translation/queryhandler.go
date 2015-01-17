@@ -7,37 +7,37 @@
 package translation
 
 import (
-    "encoding/json"
-    "fmt"
-    "net/http"
+	"encoding/json"
+	"fmt"
+	"net/http"
 
-    "appengine"
+	"appengine"
 
-    "src/core"
+	"src/core"
 )
 
 func queryTranslationHandler(w http.ResponseWriter, r *http.Request) {
-    if r.Method != "GET" {
-        panic(&core.Error{http.StatusMethodNotAllowed, ""})
-    }
+	if r.Method != "GET" {
+		panic(&core.Error{http.StatusMethodNotAllowed, ""})
+	}
 
-    // loads all translations into memory
-    c := appengine.NewContext(r)
-    translations, err := loadTranslations(c, false)
-    if err != nil {
-        panic(&core.Error{http.StatusInternalServerError, err.Error()})
-    }
+	// loads all translations into memory
+	c := appengine.NewContext(r)
+	translations, err := loadTranslations(c, false)
+	if err != nil {
+		panic(&core.Error{http.StatusInternalServerError, err.Error()})
+	}
 
-    // TODO supports queries
+	// TODO supports queries
 
-    // writes the response
-    w.Header().Set("Content-Type", "application/json;charset=utf-8")
+	// writes the response
+	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 
-    if translations == nil || len(translations) == 0 {
-        fmt.Fprint(w, "[]")
-        return
-    }
+	if translations == nil || len(translations) == 0 {
+		fmt.Fprint(w, "[]")
+		return
+	}
 
-    buf, _ := json.Marshal(translations)
-    fmt.Fprint(w, string(buf))
+	buf, _ := json.Marshal(translations)
+	fmt.Fprint(w, string(buf))
 }

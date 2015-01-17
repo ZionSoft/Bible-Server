@@ -7,11 +7,11 @@
 package notification
 
 import (
-    "net/http"
+	"net/http"
 
-    "src/core"
+	"src/core"
 )
 
 func init() {
-    http.Handle("/admin/notification/send/verse", core.Handler(sendNotificationForVerseHandler))
+	http.Handle("/admin/notification/send/verse", core.Handler(sendNotificationForVerseHandler))
 }

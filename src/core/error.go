@@ -7,6 +7,6 @@
 package core
 
 type Error struct {
-    Code    int
-    Message string
+	Code    int
+	Message string
 }
