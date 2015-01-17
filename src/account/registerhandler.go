@@ -10,6 +10,7 @@ import (
     "encoding/json"
     "fmt"
     "net/http"
+    "strconv"
 
     "appengine"
     "appengine/datastore"
@@ -29,49 +30,64 @@ func registerDeviceAccountHandler(w http.ResponseWriter, r *http.Request) {
 
     c := appengine.NewContext(r)
     err := datastore.RunInTransaction(c, func(c appengine.Context) error {
-        // TODO should caches accout info
-
         if da.AccountID == 0 {
             // it might be a new device, or the request is fired by old clients
-            q := datastore.NewQuery("DeviceAccount").Ancestor(createDeviceAccountAncestorKey(c)).Filter("PushNotificationID =", da.PushNotificationID)
-            count, err := q.Count(c)
-            if err != nil {
-                return err
+            if existing, ok := daCache.Get(da.PushNotificationID); ok {
+                // hit in-memory cache, so it's a known device with old client
+                da.AccountID = existing.(deviceAccount).AccountID
+                da.Created = existing.(deviceAccount).Created
+            } else {
+                // missed in-memory cache, should fall back to datastore
+                q := datastore.NewQuery("DeviceAccount").
+                    Ancestor(createDeviceAccountAncestorKey(c)).
+                    Filter("PushNotificationID =", da.PushNotificationID)
+                count, err := q.Count(c)
+                if err != nil {
+                    return err
+                }
+
+                if count == 0 {
+                    // from an unknown device, should create a new account
+                    key, err := datastore.Put(c, createIncompleteDeviceAccountKey(c), &da)
+                    if err != nil {
+                        return err
+                    }
+                    da.AccountID = key.IntID()
+                    daCache.Set(da.PushNotificationID, da)
+                    return nil
+                } else {
+                    var existing []*deviceAccount
+                    keys, err := q.GetAll(c, &existing)
+                    if err != nil {
+                        return err
+                    }
+                    da.AccountID = keys[0].IntID()
+                    da.Created = existing[0].Created
+                }
             }
 
-            if count == 0 {
-                // create new account
-                key, err := datastore.Put(c, createIncompleteDeviceAccountKey(c), &da)
-                if err != nil {
-                    return err
-                }
-                da.AccountID = key.IntID()
-            } else {
-                // update exisiting account (for request fired by old clients)
-                var existing []*deviceAccount
-                keys, err := q.GetAll(c, &existing)
-                if err != nil {
-                    return err
-                }
-                da.Created = existing[0].Created
-                key, err := datastore.Put(c, createDeviceAccountKey(c, keys[0].IntID()), &da)
-                if err != nil {
-                    return err
-                }
-                da.AccountID = key.IntID()
-            }
+            _, err := datastore.Put(c, createDeviceAccountKey(c, da.AccountID), &da)
+            daCache.Set(da.PushNotificationID, da)
+            return err
         } else {
             // update existing account (for request fired by new clients)
-            var existing deviceAccount
-            key := createDeviceAccountKey(c, da.AccountID)
-            if err := datastore.Get(c, key, &existing); err != nil {
-                return err
+            key := strconv.FormatInt(da.AccountID, 10)
+            if existing, ok := daCache.Get(key); ok {
+                // hit in-memory cache
+                da.Created = existing.(deviceAccount).Created
+            } else {
+                // missed in-memory cache, falls back to datastore
+                var existing deviceAccount
+                if err := datastore.Get(c, createDeviceAccountKey(c, da.AccountID), &existing); err != nil {
+                    return err
+                }
+                da.Created = existing.Created
             }
-            da.Created = existing.Created
 
-            if _, err := datastore.Put(c, key, &da); err != nil {
+            if _, err := datastore.Put(c, createDeviceAccountKey(c, da.AccountID), &da); err != nil {
                 return err
             }
+            daCache.Set(key, da)
         }
 
         return nil

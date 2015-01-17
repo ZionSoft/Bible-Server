@@ -15,6 +15,8 @@ import (
 
     "appengine"
     "appengine/datastore"
+
+    "github.com/ZionSoft/lrucache"
 )
 
 type deviceAccount struct {
@@ -26,6 +28,18 @@ type deviceAccount struct {
     Country            string `json:"-"`
     Created            int64  `datastore:",noindex" json:"-"`
     Modified           int64  `datastore:",noindex" json:"-"`
+}
+
+var daCache *lrucache.LRUCache
+
+var daCacheSize uint64 = 10 * 1024 * 1024
+
+func initializeDeviceAccountCache() {
+    daCache = lrucache.New(daCacheSize)
+}
+
+func (da deviceAccount) Size() uint64 {
+    return uint64(8 + len(da.AccountType) + len(da.PushNotificationID) + 8 + len(da.Locale) + len(da.Country) + 8 + 8)
 }
 
 func (da *deviceAccount) unmarshalHTTPRequest(r *http.Request) error {

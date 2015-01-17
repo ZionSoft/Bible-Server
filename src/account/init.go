@@ -13,5 +13,7 @@ import (
 )
 
 func init() {
+    initializeDeviceAccountCache()
+
     http.Handle("/v1/account/device", core.Handler(registerDeviceAccountHandler))
 }
