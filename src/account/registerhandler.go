@@ -41,12 +41,13 @@ func registerDeviceAccountHandler(w http.ResponseWriter, r *http.Request) {
 				q := datastore.NewQuery("DeviceAccount").
 					Ancestor(createDeviceAccountAncestorKey(c)).
 					Filter("PushNotificationID =", da.PushNotificationID)
-				count, err := q.Count(c)
+				var existing []*deviceAccount
+				keys, err := q.GetAll(c, &existing)
 				if err != nil {
 					return err
 				}
 
-				if count == 0 {
+				if len(keys) == 0 {
 					// from an unknown device, should create a new account
 					key, err := datastore.Put(c, createIncompleteDeviceAccountKey(c), &da)
 					if err != nil {
@@ -56,11 +57,7 @@ func registerDeviceAccountHandler(w http.ResponseWriter, r *http.Request) {
 					daCache.Set(da.PushNotificationID, da)
 					return nil
 				} else {
-					var existing []*deviceAccount
-					keys, err := q.GetAll(c, &existing)
-					if err != nil {
-						return err
-					}
+					// a known device with old client
 					da.AccountID = keys[0].IntID()
 					da.Created = existing[0].Created
 				}
