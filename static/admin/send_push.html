@@ -1,0 +1,25 @@
+<!--
+Copyright (c) 2015 ZionSoft. All rights reserved.
+Use of this source code is governed by a BSD-style license
+that can be found in the LICENSE file.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+  <title>ZionSoft</title>
+  <link rel="icon" type="image/x-icon" href="/view/favicon.ico" />
+</head>
+<body>
+  <h2>Send Push Notifications</h2>
+  <form action="/admin/notification/send/verse" method="post" enctype="multipart/form-data">
+    <table>
+      <tr><td>Authorization Key:</td><td><input type="text" name="authorizationKey" size="40" /></td></tr>
+      <tr><td>Book:</td><td><input type="text" name="book" size="40" /></td></tr>
+      <tr><td>Chapter:</td><td><input type="text" name="chapter" size="40" /></td></tr>
+      <tr><td>Verse:</td><td><input type="text" name="verse" size="40" /></td></tr>
+      <tr><td>UTC Offset:</td><td><input type="text" name="utcOffset" size="40" /></td></tr>
+    </table>
+    <input type="submit" value="Send" />
+  </form>
+</body>
+</html>
